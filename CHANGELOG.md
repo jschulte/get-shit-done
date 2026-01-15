@@ -5,6 +5,8 @@ All notable changes to GSD will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+### Added
+- Codex CLI installer (global or project) with prompt export and Codex-friendly command names
 
 ## [1.5.6] - 2025-01-15
 

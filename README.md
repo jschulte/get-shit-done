@@ -2,7 +2,7 @@
 
 # GET SHIT DONE
 
-**A light-weight and powerful meta-prompting, context engineering and spec-driven development system for Claude Code by TÂCHES.**
+**A light-weight and powerful meta-prompting, context engineering and spec-driven development system for Claude Code (and Codex CLI) by TÂCHES.**
 
 **Solves context rot — the quality degradation that happens as Claude fills its context window.**
 
@@ -76,6 +76,29 @@ npx get-shit-done-cc
 ```
 
 That's it. Verify with `/gsd:help` inside your Claude Code interface.
+
+### Codex CLI (OpenAI)
+
+```bash
+npx get-shit-done-cc --tool codex
+```
+
+Use `/gsd-help` in Codex CLI (hyphenated commands).
+
+<details>
+<summary><strong>Project-Local Codex Install</strong></summary>
+
+```bash
+npx get-shit-done-cc --tool codex --local
+```
+
+Set `CODEX_HOME` before launching Codex:
+
+```bash
+export CODEX_HOME="$PWD/.codex"
+```
+
+</details>
 
 ### Staying Updated
 
@@ -352,6 +375,8 @@ You're never locked in. The system adapts.
 ---
 
 ## Commands
+
+> Codex CLI uses hyphenated commands (e.g., `/gsd-help`) instead of `/gsd:help`.
 
 ### Setup
 

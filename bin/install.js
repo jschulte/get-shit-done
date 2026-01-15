@@ -25,13 +25,15 @@ ${cyan}   ██████╗ ███████╗██████╗
 
   Get Shit Done ${dim}v${pkg.version}${reset}
   A meta-prompting, context engineering and spec-driven
-  development system for Claude Code by TÂCHES.
+  development system for Claude Code and Codex CLI by TÂCHES.
 `;
 
 // Parse args
 const args = process.argv.slice(2);
 const hasGlobal = args.includes('--global') || args.includes('-g');
 const hasLocal = args.includes('--local') || args.includes('-l');
+const hasCodex = args.includes('--codex');
+const hasClaude = args.includes('--claude');
 
 // Parse --config-dir argument
 function parseConfigDirArg() {
@@ -53,9 +55,54 @@ function parseConfigDirArg() {
   return null;
 }
 const explicitConfigDir = parseConfigDirArg();
+// Parse --tool argument
+function parseToolArg() {
+  const toolIndex = args.findIndex(arg => arg === '--tool' || arg === '-t');
+  if (toolIndex !== -1) {
+    const nextArg = args[toolIndex + 1];
+    if (!nextArg || nextArg.startsWith('-')) {
+      console.error(`  ${yellow}--tool requires a value (claude|codex)${reset}`);
+      process.exit(1);
+    }
+    return nextArg;
+  }
+  const toolArg = args.find(arg => arg.startsWith('--tool=') || arg.startsWith('-t='));
+  if (toolArg) {
+    return toolArg.split('=')[1];
+  }
+  return null;
+}
+const explicitTool = parseToolArg();
 const hasHelp = args.includes('--help') || args.includes('-h');
 
 console.log(banner);
+
+function normalizeTool(tool) {
+  if (!tool) return null;
+  const lower = tool.toLowerCase();
+  if (lower === 'claude' || lower === 'claude-code') return 'claude';
+  if (lower === 'codex') return 'codex';
+  return null;
+}
+
+const normalizedExplicitTool = normalizeTool(explicitTool);
+if (explicitTool && !normalizedExplicitTool) {
+  console.error(`  ${yellow}Unknown tool "${explicitTool}". Use "claude" or "codex".${reset}`);
+  process.exit(1);
+}
+
+if (hasCodex && hasClaude) {
+  console.error(`  ${yellow}Cannot specify both --codex and --claude${reset}`);
+  process.exit(1);
+}
+
+if ((hasCodex && normalizedExplicitTool && normalizedExplicitTool !== 'codex') ||
+    (hasClaude && normalizedExplicitTool && normalizedExplicitTool !== 'claude')) {
+  console.error(`  ${yellow}--tool conflicts with --codex/--claude${reset}`);
+  process.exit(1);
+}
+
+const tool = normalizedExplicitTool || (hasCodex ? 'codex' : 'claude');
 
 // Show help if requested
 if (hasHelp) {
@@ -64,7 +111,10 @@ if (hasHelp) {
   ${yellow}Options:${reset}
     ${cyan}-g, --global${reset}              Install globally (to Claude config directory)
     ${cyan}-l, --local${reset}               Install locally (to ./.claude in current directory)
-    ${cyan}-c, --config-dir <path>${reset}   Specify custom Claude config directory
+    ${cyan}-c, --config-dir <path>${reset}   Specify custom config directory (Claude/Codex)
+    ${cyan}-t, --tool <name>${reset}         Target tool: claude | codex (default: claude)
+    ${cyan}--claude${reset}                   Shortcut for --tool claude
+    ${cyan}--codex${reset}                    Shortcut for --tool codex
     ${cyan}-h, --help${reset}                Show this help message
 
   ${yellow}Examples:${reset}
@@ -80,10 +130,17 @@ if (hasHelp) {
     ${dim}# Install to current project only${reset}
     npx get-shit-done-cc --local
 
+    ${dim}# Install Codex prompts globally${reset}
+    npx get-shit-done-cc --tool codex --global
+
+    ${dim}# Install Codex prompts to this project${reset}
+    npx get-shit-done-cc --codex --local
+
   ${yellow}Notes:${reset}
     The --config-dir option is useful when you have multiple Claude Code
     configurations (e.g., for different subscriptions). It takes priority
     over the CLAUDE_CONFIG_DIR environment variable.
+    For Codex, --config-dir overrides CODEX_HOME for global installs.
 `);
   process.exit(0);
 }
@@ -99,9 +156,9 @@ function expandTilde(filePath) {
 }
 
 /**
- * Recursively copy directory, replacing paths in .md files
+ * Recursively copy directory, transforming .md files
  */
-function copyWithPathReplacement(srcDir, destDir, pathPrefix) {
+function copyWithTransform(srcDir, destDir, transformContent) {
   fs.mkdirSync(destDir, { recursive: true });
 
   const entries = fs.readdirSync(srcDir, { withFileTypes: true });
@@ -111,11 +168,10 @@ function copyWithPathReplacement(srcDir, destDir, pathPrefix) {
     const destPath = path.join(destDir, entry.name);
 
     if (entry.isDirectory()) {
-      copyWithPathReplacement(srcPath, destPath, pathPrefix);
+      copyWithTransform(srcPath, destPath, transformContent);
     } else if (entry.name.endsWith('.md')) {
-      // Replace ~/.claude/ with the appropriate prefix in markdown files
       let content = fs.readFileSync(srcPath, 'utf8');
-      content = content.replace(/~\/\.claude\//g, pathPrefix);
+      content = transformContent(content);
       fs.writeFileSync(destPath, content);
     } else {
       fs.copyFileSync(srcPath, destPath);
@@ -123,56 +179,132 @@ function copyWithPathReplacement(srcDir, destDir, pathPrefix) {
   }
 }
 
+function createContentTransform(pathPrefix, targetTool) {
+  return (content) => {
+    let updated = content.replace(/~\/\.claude\//g, pathPrefix);
+    if (targetTool === 'codex') {
+      updated = updated.replace(/\/gsd:/g, '/gsd-');
+      updated = updated.replace(/^name:\s*gsd:(.+)$/m, (_match, rest) => `name: gsd-${rest.trim()}`);
+    }
+    return updated;
+  };
+}
+
+function getToolConfig(targetTool, isGlobal) {
+  const toolDirName = targetTool === 'codex' ? '.codex' : '.claude';
+  const envVar = targetTool === 'codex' ? 'CODEX_HOME' : 'CLAUDE_CONFIG_DIR';
+  const configDir = expandTilde(explicitConfigDir) || expandTilde(process.env[envVar]);
+  const defaultGlobalDir = configDir || path.join(os.homedir(), toolDirName);
+  const rootDir = isGlobal
+    ? defaultGlobalDir
+    : path.join(process.cwd(), toolDirName);
+
+  const locationLabel = isGlobal
+    ? rootDir.replace(os.homedir(), '~')
+    : rootDir.replace(process.cwd(), '.');
+
+  const pathPrefix = isGlobal
+    ? (configDir ? `${rootDir}/` : `~/${toolDirName}/`)
+    : `./${toolDirName}/`;
+
+  return {
+    toolDirName,
+    configDir,
+    rootDir,
+    locationLabel,
+    pathPrefix,
+  };
+}
+
+function clearOldCodexPrompts(promptsDir) {
+  if (!fs.existsSync(promptsDir)) {
+    return;
+  }
+  const entries = fs.readdirSync(promptsDir);
+  for (const entry of entries) {
+    if (!entry.startsWith('gsd-') || !entry.endsWith('.md')) {
+      continue;
+    }
+    fs.rmSync(path.join(promptsDir, entry), { force: true });
+  }
+}
+
 /**
  * Install to the specified directory
  */
-function install(isGlobal) {
+function install(targetTool, isGlobal) {
   const src = path.join(__dirname, '..');
-  // Priority: explicit --config-dir arg > CLAUDE_CONFIG_DIR env var > default ~/.claude
-  const configDir = expandTilde(explicitConfigDir) || expandTilde(process.env.CLAUDE_CONFIG_DIR);
-  const defaultGlobalDir = configDir || path.join(os.homedir(), '.claude');
-  const claudeDir = isGlobal
-    ? defaultGlobalDir
-    : path.join(process.cwd(), '.claude');
-
-  const locationLabel = isGlobal
-    ? claudeDir.replace(os.homedir(), '~')
-    : claudeDir.replace(process.cwd(), '.');
-
-  // Path prefix for file references
-  // Use actual path when CLAUDE_CONFIG_DIR is set, otherwise use ~ shorthand
-  const pathPrefix = isGlobal
-    ? (configDir ? `${claudeDir}/` : '~/.claude/')
-    : './.claude/';
+  const { rootDir, locationLabel, pathPrefix } = getToolConfig(targetTool, isGlobal);
+  const transformContent = createContentTransform(pathPrefix, targetTool);
 
   console.log(`  Installing to ${cyan}${locationLabel}${reset}\n`);
 
-  // Create commands directory
-  const commandsDir = path.join(claudeDir, 'commands');
+  if (targetTool === 'codex') {
+    const promptsDir = path.join(rootDir, 'prompts');
+    fs.mkdirSync(promptsDir, { recursive: true });
+    clearOldCodexPrompts(promptsDir);
+
+    const gsdSrc = path.join(src, 'commands', 'gsd');
+    const commandFiles = fs.readdirSync(gsdSrc).filter(file => file.endsWith('.md'));
+    for (const file of commandFiles) {
+      const srcPath = path.join(gsdSrc, file);
+      const baseName = path.basename(file, '.md');
+      const destPath = path.join(promptsDir, `gsd-${baseName}.md`);
+      let content = fs.readFileSync(srcPath, 'utf8');
+      content = transformContent(content);
+      fs.writeFileSync(destPath, content);
+    }
+    console.log(`  ${green}✓${reset} Installed Codex prompts (${commandFiles.length})`);
+
+    const skillSrc = path.join(src, 'get-shit-done');
+    const skillDest = path.join(rootDir, 'get-shit-done');
+    copyWithTransform(skillSrc, skillDest, transformContent);
+    console.log(`  ${green}✓${reset} Installed get-shit-done`);
+
+    const changelogSrc = path.join(src, 'CHANGELOG.md');
+    const changelogDest = path.join(rootDir, 'get-shit-done', 'CHANGELOG.md');
+    if (fs.existsSync(changelogSrc)) {
+      fs.copyFileSync(changelogSrc, changelogDest);
+      console.log(`  ${green}✓${reset} Installed CHANGELOG.md`);
+    }
+
+    const versionDest = path.join(rootDir, 'get-shit-done', 'VERSION');
+    fs.writeFileSync(versionDest, pkg.version);
+    console.log(`  ${green}✓${reset} Wrote VERSION (${pkg.version})`);
+
+    console.log(`
+  ${green}Done!${reset} Launch Codex CLI and run ${cyan}/gsd-help${reset}.
+`);
+
+    if (!isGlobal) {
+      const codexHome = path.join(process.cwd(), '.codex');
+      console.log(`  ${yellow}Note:${reset} Set ${cyan}CODEX_HOME${reset} to ${cyan}${codexHome}${reset} before launching Codex.`);
+    }
+    return;
+  }
+
+  // Claude Code install
+  const commandsDir = path.join(rootDir, 'commands');
   fs.mkdirSync(commandsDir, { recursive: true });
 
-  // Copy commands/gsd with path replacement
   const gsdSrc = path.join(src, 'commands', 'gsd');
   const gsdDest = path.join(commandsDir, 'gsd');
-  copyWithPathReplacement(gsdSrc, gsdDest, pathPrefix);
+  copyWithTransform(gsdSrc, gsdDest, transformContent);
   console.log(`  ${green}✓${reset} Installed commands/gsd`);
 
-  // Copy get-shit-done skill with path replacement
   const skillSrc = path.join(src, 'get-shit-done');
-  const skillDest = path.join(claudeDir, 'get-shit-done');
-  copyWithPathReplacement(skillSrc, skillDest, pathPrefix);
+  const skillDest = path.join(rootDir, 'get-shit-done');
+  copyWithTransform(skillSrc, skillDest, transformContent);
   console.log(`  ${green}✓${reset} Installed get-shit-done`);
 
-  // Copy CHANGELOG.md
   const changelogSrc = path.join(src, 'CHANGELOG.md');
-  const changelogDest = path.join(claudeDir, 'get-shit-done', 'CHANGELOG.md');
+  const changelogDest = path.join(rootDir, 'get-shit-done', 'CHANGELOG.md');
   if (fs.existsSync(changelogSrc)) {
     fs.copyFileSync(changelogSrc, changelogDest);
     console.log(`  ${green}✓${reset} Installed CHANGELOG.md`);
   }
 
-  // Write VERSION file for whats-new command
-  const versionDest = path.join(claudeDir, 'get-shit-done', 'VERSION');
+  const versionDest = path.join(rootDir, 'get-shit-done', 'VERSION');
   fs.writeFileSync(versionDest, pkg.version);
   console.log(`  ${green}✓${reset} Wrote VERSION (${pkg.version})`);
 
@@ -184,27 +316,27 @@ function install(isGlobal) {
 /**
  * Prompt for install location
  */
-function promptLocation() {
+function promptLocation(targetTool) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
   });
 
-  const configDir = expandTilde(explicitConfigDir) || expandTilde(process.env.CLAUDE_CONFIG_DIR);
-  const globalPath = configDir || path.join(os.homedir(), '.claude');
-  const globalLabel = globalPath.replace(os.homedir(), '~');
+  const { rootDir, locationLabel } = getToolConfig(targetTool, true);
+  const globalLabel = locationLabel;
+  const localLabel = targetTool === 'codex' ? './.codex' : './.claude';
 
   console.log(`  ${yellow}Where would you like to install?${reset}
 
   ${cyan}1${reset}) Global ${dim}(${globalLabel})${reset} - available in all projects
-  ${cyan}2${reset}) Local  ${dim}(./.claude)${reset} - this project only
+  ${cyan}2${reset}) Local  ${dim}(${localLabel})${reset} - this project only
 `);
 
   rl.question(`  Choice ${dim}[1]${reset}: `, (answer) => {
     rl.close();
     const choice = answer.trim() || '1';
     const isGlobal = choice !== '2';
-    install(isGlobal);
+    install(targetTool, isGlobal);
   });
 }
 
@@ -216,9 +348,9 @@ if (hasGlobal && hasLocal) {
   console.error(`  ${yellow}Cannot use --config-dir with --local${reset}`);
   process.exit(1);
 } else if (hasGlobal) {
-  install(true);
+  install(tool, true);
 } else if (hasLocal) {
-  install(false);
+  install(tool, false);
 } else {
-  promptLocation();
+  promptLocation(tool);
 }
