@@ -17,6 +17,8 @@ Analyze existing codebase using parallel Explore agents to produce structured co
 This command spawns multiple Explore agents to analyze different aspects of the codebase in parallel, each with fresh context.
 
 Output: .planning/codebase/ folder with 7 structured documents about the codebase state.
+
+**Codex fallback:** If Task/subagents are unavailable, run the analysis sequentially in the current session (no parallel agents).
 </objective>
 
 <execution_context>
@@ -63,6 +65,7 @@ Check for .planning/STATE.md - loads context if project already initialized
    - Agent 2: Architecture + Structure (organization focus)
    - Agent 3: Conventions + Testing (quality focus)
    - Agent 4: Concerns (issues focus)
+   - **If Task unavailable:** execute these areas sequentially in this session
 4. Wait for all agents to complete, collect findings
 5. Write 7 codebase documents using templates:
    - STACK.md - Languages, frameworks, key dependencies

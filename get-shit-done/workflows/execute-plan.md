@@ -6,6 +6,10 @@ Execute a phase prompt (PLAN.md) and create the outcome summary (SUMMARY.md).
 Read STATE.md before any operation to load project context.
 </required_reading>
 
+<codex_note>
+If Task/subagents are unavailable (e.g., Codex CLI), run this workflow entirely in main context. Skip all subagent spawning, agent-history tracking, and continuation-agent logic. Execute tasks directly, handle checkpoints with the user in-session, then create SUMMARY and commit as usual.
+</codex_note>
+
 <process>
 
 <step name="load_project_state" priority="first">

@@ -24,6 +24,10 @@ With it, phases reflect how experts actually build these systems.
 - Brownfield features (use research-phase instead)
 </when_to_use>
 
+<codex_note>
+If Task/subagents are unavailable (e.g., Codex CLI), run research sequentially in the current session. Create each research file one at a time using the templates in order (SUMMARY → STACK → FEATURES → ARCHITECTURE → PITFALLS).
+</codex_note>
+
 <required_reading>
 **Read these files NOW:**
 

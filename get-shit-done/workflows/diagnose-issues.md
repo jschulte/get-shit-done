@@ -6,6 +6,10 @@ After UAT finds issues, spawn one debug agent per issue. Each agent investigates
 Orchestrator stays lean: parse issues, spawn agents, collect results, update UAT.
 </purpose>
 
+<codex_note>
+If Task/subagents are unavailable (e.g., Codex CLI), diagnose issues sequentially in the current session. Work through each issue one at a time, update UAT.md after each diagnosis, then continue.
+</codex_note>
+
 <paths>
 DEBUG_DIR=.planning/debug
 

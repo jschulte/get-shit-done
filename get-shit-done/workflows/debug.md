@@ -13,6 +13,10 @@ You are the debugger. The user knows what's wrong (behavior), not why (root caus
 - **goal: find_and_fix** — Find root cause, fix it, verify (default)
 </purpose>
 
+<codex_note>
+If Task/subagents are unavailable (e.g., Codex CLI), run the investigation in main context and skip any subagent or continuation-agent instructions.
+</codex_note>
+
 <paths>
 DEBUG_DIR=.planning/debug
 DEBUG_RESOLVED_DIR=.planning/debug/resolved

@@ -18,6 +18,8 @@ Execute a single PLAN.md file by spawning a subagent.
 Orchestrator stays lean: validate plan, spawn subagent, handle checkpoints, report completion. Subagent loads full execute-plan workflow and handles all execution details.
 
 Context budget: ~15% orchestrator, 100% fresh for subagent.
+
+**Codex fallback:** If the Task tool/subagents are unavailable, execute the plan directly in the current session (main context). Follow the execute-plan workflow without spawning any subagents.
 </objective>
 
 <execution_context>
@@ -81,6 +83,7 @@ Plan path: $ARGUMENTS
 5. **Fill and spawn subagent**
    - Fill subagent-task-prompt template with extracted values
    - Spawn: `Task(prompt=filled_template, subagent_type="general-purpose")`
+   - **If Task unavailable:** Skip spawning and execute the plan directly in this session using the execute-plan workflow (main-context path)
 
 6. **Handle subagent return**
    - If contains "## CHECKPOINT REACHED": Execute checkpoint_handling

@@ -4,6 +4,10 @@ Validate built features through conversational testing with persistent state. Cr
 User tests, Claude records. One test at a time. Plain text responses.
 </purpose>
 
+<codex_note>
+If Task/subagents are unavailable (e.g., Codex CLI), any follow-on diagnosis should be run sequentially (one issue at a time) instead of parallel debug agents.
+</codex_note>
+
 <philosophy>
 **Show expected, ask if reality matches.**
 

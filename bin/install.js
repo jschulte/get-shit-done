@@ -183,7 +183,8 @@ function createContentTransform(pathPrefix, targetTool) {
   return (content) => {
     let updated = content.replace(/~\/\.claude\//g, pathPrefix);
     if (targetTool === 'codex') {
-      updated = updated.replace(/\/gsd:/g, '/gsd-');
+      updated = updated.replace(/\/gsd:([A-Za-z0-9-]+)/g, '/prompts:gsd-$1');
+      updated = updated.replace(/\/gsd-([A-Za-z0-9-]+)/g, '/prompts:gsd-$1');
       updated = updated.replace(/^name:\s*gsd:(.+)$/m, (_match, rest) => `name: gsd-${rest.trim()}`);
     }
     return updated;
@@ -273,7 +274,7 @@ function install(targetTool, isGlobal) {
     console.log(`  ${green}✓${reset} Wrote VERSION (${pkg.version})`);
 
     console.log(`
-  ${green}Done!${reset} Launch Codex CLI and run ${cyan}/gsd-help${reset}.
+  ${green}Done!${reset} Launch Codex CLI and run ${cyan}/prompts:gsd-help${reset}.
 `);
 
     if (!isGlobal) {

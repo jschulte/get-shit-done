@@ -18,6 +18,10 @@ Include enough detail to be useful as reference. Prioritize practical examples (
 Documents are reference material for Claude when planning/executing. Vague descriptions like "UserService handles users" are not actionable. Always include actual file paths formatted with backticks: `src/services/user.ts`. This allows Claude to navigate directly to relevant code without re-searching. Do NOT include line numbers (they go stale), just file paths.
 </philosophy>
 
+<codex_note>
+If Task/subagents are unavailable (e.g., Codex CLI), run the analysis sequentially in the current session. Create each codebase document one at a time using the templates, in the same order as the parallel agents would.
+</codex_note>
+
 <process>
 
 <step name="check_existing" priority="first">

@@ -19,6 +19,8 @@ Output ONLY the reference content below. Do NOT add:
 
 **GSD** (Get Shit Done) creates hierarchical project plans optimized for solo agentic development with Claude Code.
 
+> Codex CLI note: use `/prompts:gsd-...` (hyphenated commands) and run plans sequentially (no subagents).
+
 ## Quick Start
 
 1. `/gsd:new-project` - Initialize project with brief

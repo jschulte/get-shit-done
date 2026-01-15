@@ -258,6 +258,7 @@ questions: [
 - Depth controls compression tolerance, not artificial inflation
 - Parallelization spawns multiple agents for independent plans
 - All settings can be changed later in config.json
+- **Codex fallback:** If subagents are unavailable, choose "Sequential" and set parallelization.enabled=false
 
 </step>
 

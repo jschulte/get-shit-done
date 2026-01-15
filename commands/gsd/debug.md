@@ -19,6 +19,8 @@ Debug issues using scientific method with subagent isolation for investigation.
 **Orchestrator role:** Gather symptoms interactively, spawn investigation subagent, handle checkpoints, spawn continuation agents as needed.
 
 **Why subagent:** Investigation burns context fast (reading files, forming hypotheses, testing). Fresh 200k context per investigation attempt. Main context stays lean for user interaction.
+
+**Codex fallback:** If Task/subagents are unavailable, run the investigation in the current session and skip subagent spawning.
 </objective>
 
 <execution_context>

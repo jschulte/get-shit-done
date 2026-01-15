@@ -83,7 +83,7 @@ That's it. Verify with `/gsd:help` inside your Claude Code interface.
 npx get-shit-done-cc --tool codex
 ```
 
-Use `/gsd-help` in Codex CLI (hyphenated commands).
+Use `/prompts:gsd-help` in Codex CLI (hyphenated commands with the prompts prefix).
 
 <details>
 <summary><strong>Project-Local Codex Install</strong></summary>
@@ -241,6 +241,8 @@ Each phase breaks into 2-3 task plans. Each plan runs in a fresh subagent contex
 
 Use `/gsd:execute-phase` for parallel "walk away" automation (recommended). Use `/gsd:execute-plan` when you need interactive single-plan execution with manual checkpoints.
 
+> Codex CLI note: subagents/parallelism aren’t available, so run plans sequentially with `/gsd:execute-plan`.
+
 ### 5. Ship and iterate
 
 ```
@@ -376,7 +378,7 @@ You're never locked in. The system adapts.
 
 ## Commands
 
-> Codex CLI uses hyphenated commands (e.g., `/gsd-help`) instead of `/gsd:help`.
+> Codex CLI uses hyphenated commands with the prompts prefix (e.g., `/prompts:gsd-help`) instead of `/gsd:help`.
 
 ### Setup
 
@@ -393,8 +395,8 @@ You're never locked in. The system adapts.
 | Command | What it does |
 |---------|--------------|
 | `/gsd:plan-phase [N]` | Generate task plans for phase |
-| `/gsd:execute-phase <N>` | Execute all plans in phase with parallel agents |
-| `/gsd:execute-plan` | Run single plan via subagent |
+| `/gsd:execute-phase <N>` | Execute all plans in phase with parallel agents (Codex: run plans sequentially) |
+| `/gsd:execute-plan` | Run single plan (Codex: runs in main session) |
 | `/gsd:progress` | Where am I? What's next? |
 
 ### Verification

@@ -6,6 +6,10 @@ Execute all plans in a phase using wave-based parallel execution. Orchestrator s
 The orchestrator's job is coordination, not execution. Each subagent loads the full execute-plan context itself. Orchestrator discovers plans, analyzes dependencies, groups into waves, spawns agents, handles checkpoints, collects results.
 </core_principle>
 
+<codex_note>
+If Task/subagents are unavailable (e.g., Codex CLI), execute plans sequentially in the current session. Still respect wave order, but run each plan one at a time using the execute-plan workflow (main context).
+</codex_note>
+
 <required_reading>
 Read STATE.md before any operation to load project context.
 </required_reading>

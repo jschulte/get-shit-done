@@ -25,6 +25,8 @@ Answers the questions that inform quality roadmaps:
 Run after `/gsd:new-project`, before `/gsd:define-requirements`.
 
 Output: `.planning/research/` folder with ecosystem knowledge.
+
+**Codex fallback:** If Task/subagents are unavailable, run the research workflow sequentially in the current session (no parallel agents).
 </objective>
 
 <execution_context>
@@ -80,6 +82,7 @@ Follow the research-project.md workflow:
 - Spawn parallel research agents
 - Aggregate results into `.planning/research/`
 - Create SUMMARY.md with roadmap implications
+- **If Task unavailable:** execute each research file sequentially in this session
 </step>
 
 <step name="done">

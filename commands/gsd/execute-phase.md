@@ -20,6 +20,8 @@ Execute all plans in a phase using wave-based parallel execution.
 Orchestrator stays lean: discover plans, analyze dependencies, group into waves, spawn subagents, collect results. Each subagent loads the full execute-plan context and handles its own plan.
 
 Context budget: ~15% orchestrator, 100% fresh per subagent.
+
+**Codex fallback:** If the Task tool/subagents are unavailable, execute plans sequentially in the current session (no parallelization). For each plan in wave order, run the execute-plan workflow directly in main context and wait for completion before moving on.
 </objective>
 
 <execution_context>
@@ -58,6 +60,7 @@ Phase: $ARGUMENTS
    - Wait for completion (Task blocks)
    - Verify SUMMARYs created
    - Proceed to next wave
+   - **If Task unavailable:** execute each plan sequentially in this session using execute-plan workflow (no parallelization)
 
 5. **Aggregate results**
    - Collect summaries from all plans
