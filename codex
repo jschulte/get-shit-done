@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+# Project-local Codex wrapper: ensures CODEX_HOME points at this repo
+PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
+export CODEX_HOME="$PROJECT_ROOT/.codex"
+
+exec codex "$@"

@@ -98,6 +98,12 @@ Set `CODEX_HOME` before launching Codex:
 export CODEX_HOME="$PWD/.codex"
 ```
 
+Or use the repo wrapper (sets `CODEX_HOME` automatically):
+
+```bash
+./codex
+```
+
 </details>
 
 ### Staying Updated
